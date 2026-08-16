@@ -17,7 +17,7 @@
 | `gitee_rerank` | 候选文档相关性重排 | `Qwen3-Reranker-4B`（免费） |
 | `gitee_vision` | 图片理解 / 通用 OCR | `Qwen3-VL-32B-Instruct` |
 | `gitee_parse` | 高精度文档解析（PDF/图片/docx/pptx，输出 Markdown） | `MinerU2.5-Pro` |
-| `gitee_image` | 文生图 | `FLUX.2-klein-4B` |
+| `gitee_image` | 文生图，自动保存到磁盘并返回文件路径 | `FLUX.2-klein-4B` |
 
 所有工具的模型均可通过参数覆盖。
 
@@ -27,8 +27,8 @@
 # 从 npm
 pi install npm:pi-gitee-ai
 
-# 或从 git（Gitee / GitHub）
-pi install git:gitee.com/<你的用户名>/pi-gitee-ai@v0.1.0
+# 或从 git
+pi install git:github.com/ZhaoCake/pi-gitee-ai@v0.1.0
 ```
 
 ## 配置 API Key
@@ -65,13 +65,13 @@ pi --provider gitee-ai        # 用 gitee-ai 作为 provider
 
 ```bash
 pi update --extensions        # 更新所有包（含本包）
-pi update npm:pi-gitee-ai     # 只更新本包
+pi update npm:pi-gitee-ai     # 只更新本包（若通过 npm 安装）
 ```
 
 若通过 git tag 安装，`pi update` 会停留在已 pin 的 tag；升级到新版需显式指定：
 
 ```bash
-pi install git:gitee.com/<你的用户名>/pi-gitee-ai@v0.2.0
+pi install git:github.com/ZhaoCake/pi-gitee-ai@v0.2.0
 ```
 
 ## 安全说明
@@ -82,14 +82,19 @@ pi install git:gitee.com/<你的用户名>/pi-gitee-ai@v0.2.0
 ## 开发 / 发布
 
 ```bash
-git init && git add -A && git commit -m "v0.1.0"
-git tag v0.1.0
+# 1. 修改 extensions/ 下的代码（改完可本地验证：pi --list-models ／直接在会话里调工具）
+# 2. 提交并推送
+git add -A && git commit -m "feat: ..."
+git push origin main
 
-# 发布到 npm（需 npm 账号）
-npm publish
+# 3. 发新版：改 package.json 的 version（或 npm version patch），打新 tag 并推送
+git tag v0.2.0 && git push origin v0.2.0
 
-# 或推送 git 仓库，别人用 pi install git:... 安装
+# 4.（可选）发布到 npm
+npm publish          # 需 npm 账号；或配置 GitHub Actions 推 tag 自动发布
 ```
+
+版本约定：用户通过 `pi install git:...@vX.Y.Z` 安装，升级时显式指定新 tag。
 
 ## 致谢
 
