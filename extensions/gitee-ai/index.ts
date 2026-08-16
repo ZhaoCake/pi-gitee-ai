@@ -3,10 +3,11 @@
 // Registers:
 //   - provider "gitee-ai" with 4 LLM models (deepseek-v4-flash-0731, GLM-5.2,
 //     kimi-k3, Kimi-K2.7-Code) via pi.registerProvider()
-//   - 4 custom tools callable by the agent:
+//   - 5 custom tools callable by the agent:
 //       gitee_embed    → POST /v1/embeddings  (Qwen3-Embedding-4B etc.)
 //       gitee_rerank   → POST /v1/rerank      (Qwen3-Reranker-4B etc.)
 //       gitee_vision   → chat completions + image_url (Qwen3-VL-32B-Instruct)
+//       gitee_parse    → MinerU async doc parse / OCR (MinerU2.5-Pro)
 //       gitee_image    → POST /v1/images/generations (FLUX.2-klein-4B etc.)
 //
 // API key: read from the GITEE_AI_API_KEY environment variable at call time
@@ -15,8 +16,8 @@
 // Cheap-by-default: default models in the tools are the free or low-cost ones
 // (embedding/rerank are free on Gitee). Users can pass any other model id.
 
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { basename, join, resolve } from "node:path";
 import { Type } from "@earendil-works/pi-ai";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
@@ -230,7 +231,7 @@ export default function (pi: ExtensionAPI) {
       name: "gitee_image",
       label: "Gitee Image Gen",
       description:
-        "根据文字描述生成图片（文生图）。默认模型 FLUX.2-klein-4B（轻量低成本），可传其他模型名（如 FLUX.2-dev、Qwen-Image、Wan2.7）。响应默认返回 base64 数据，会保存到磁盘并返回文件路径（通过 bash 保存）。",
+        "根据文字描述生成图片（文生图）并保存到磁盘，返回文件路径。默认模型 FLUX.2-klein-4B（轻量低成本），可传其他模型名（如 FLUX.2-dev、Qwen-Image、Wan2.7）。",
       promptSnippet: "按文字描述生成图片（Gitee AI）",
       parameters: Type.Object({
         prompt: Type.String({ description: "图片内容描述（建议用英文获得最佳效果）" }),
@@ -238,7 +239,7 @@ export default function (pi: ExtensionAPI) {
         seed: Type.Optional(Type.Number({ description: "随机种子，可复现" })),
         model: Type.Optional(Type.String({ description: "图像模型名，默认 FLUX.2-klein-4B" })),
       }),
-      async execute(_id, params) {
+      async execute(_id, params, _signal, _onUpdate, ctx) {
         const model = params.model ?? "FLUX.2-klein-4B";
         const result = await generateImage(model, params.prompt, {
           size: params.size,
@@ -249,17 +250,34 @@ export default function (pi: ExtensionAPI) {
         if (!image?.b64_json) {
           return textResult("生成失败：未返回图片数据", { result });
         }
-        return {
-          content: [
-            {
-              type: "text",
-              text: `图片已生成（模型: ${model}, 尺寸: ${params.size ?? "1024x1024"}）。\n` +
-                `base64 前缀: ${image.b64_json.slice(0, 64)}...（共 ${(image.b64_json.length / 1024).toFixed(0)}KB）。\n` +
-                `如需保存，可将 base64 解码写入 .png 文件。`,
-            },
-          ],
-          details: { model, size: params.size ?? "1024x1024", b64_len: image.b64_json.length },
-        };
+        // Decode base64 → detect PNG/JPEG/WebP magic bytes → save to disk.
+        const buf = Buffer.from(image.b64_json, "base64");
+        const hex = buf.subarray(0, 12).toString("hex");
+        const ext = hex.startsWith("89504e47")
+          ? "png"
+          : hex.startsWith("ffd8ff")
+            ? "jpg"
+            : hex.startsWith("52494646") && hex.includes("57454250")
+              ? "webp"
+              : null;
+        if (!ext) {
+          return textResult("生成成功但无法识别图片格式（未保存）", {
+            model,
+            b64_len: buf.length,
+            magic: hex.slice(0, 12),
+          });
+        }
+        // Save into the repo-agnostic output dir under the current directory.
+        const outDir = join(ctx.cwd, "gitee-images");
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const filePath = join(outDir, `${basename(model)}-${stamp}.${ext}`);
+        await mkdir(outDir, { recursive: true });
+        await writeFile(filePath, buf);
+        return textResult(
+          `图片已生成并保存：${filePath}\n` +
+            `模型: ${model}，尺寸: ${params.size ?? "1024x1024"}，文件: ${(buf.length / 1024).toFixed(0)}KB`,
+          { model, size: params.size ?? "1024x1024", filePath, bytes: buf.length },
+        );
       },
     }),
   );
