@@ -1,0 +1,18 @@
+{
+  "name": "pi-gitee-ai",
+  "version": "0.1.0",
+  "description": "Gitee AI (模力方舟) provider + tools for pi: LLM models (DeepSeek V4, GLM 5.2, Kimi K3/K2.7), OCR/document parsing (MinerU), embeddings, reranking, and image generation. All via the OpenAI-compatible api.gitee.com/v1 endpoint.",
+  "keywords": ["pi-package", "pi", "gitee", "moark", "模力方舟", "ocr", "embedding", "rerank", "mineru"],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "pi": {
+    "extensions": ["./extensions"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}
