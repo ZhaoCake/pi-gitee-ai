@@ -8,7 +8,7 @@
 //       gitee_rerank   → POST /v1/rerank      (Qwen3-Reranker-4B etc.)
 //       gitee_vision   → chat completions + image_url (Qwen3-VL-32B-Instruct)
 //       gitee_parse    → MinerU async doc parse / OCR (MinerU2.5-Pro)
-//       gitee_image    → POST /v1/images/generations (FLUX.2-klein-4B etc.)
+//       gitee_image    → POST /v1/images/generations (stable-diffusion-3.5-large-turbo)
 //
 // API key: read from the GITEE_AI_API_KEY environment variable at call time
 // (never hard-coded, nothing to leak when this is shared as a pi package).
@@ -231,16 +231,16 @@ export default function (pi: ExtensionAPI) {
       name: "gitee_image",
       label: "Gitee Image Gen",
       description:
-        "根据文字描述生成图片（文生图）并保存到磁盘，返回文件路径。默认模型 FLUX.2-klein-4B（轻量低成本），可传其他模型名（如 FLUX.2-dev、Qwen-Image、Wan2.7）。",
+        "根据文字描述生成图片（文生图）并保存到磁盘，返回文件路径。默认模型 stable-diffusion-3.5-large-turbo（效果好），可传其他模型名（如 FLUX.2-klein-4B、FLUX.2-dev、Qwen-Image、Wan2.7）。",
       promptSnippet: "按文字描述生成图片（Gitee AI）",
       parameters: Type.Object({
         prompt: Type.String({ description: "图片内容描述（建议用英文获得最佳效果）" }),
         size: Type.Optional(Type.String({ description: "尺寸，如 1024x1024（默认）" })),
         seed: Type.Optional(Type.Number({ description: "随机种子，可复现" })),
-        model: Type.Optional(Type.String({ description: "图像模型名，默认 FLUX.2-klein-4B" })),
+        model: Type.Optional(Type.String({ description: "图像模型名，默认 stable-diffusion-3.5-large-turbo" })),
       }),
       async execute(_id, params, _signal, _onUpdate, ctx) {
-        const model = params.model ?? "FLUX.2-klein-4B";
+        const model = params.model ?? "stable-diffusion-3.5-large-turbo";
         const result = await generateImage(model, params.prompt, {
           size: params.size,
           seed: params.seed,

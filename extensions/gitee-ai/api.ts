@@ -6,7 +6,7 @@
 //   POST /v1/embeddings          → OpenAI-format embeddings (Qwen3-Embedding-4B)
 //   POST /v1/rerank              → docs + relevance_score (Qwen3-Reranker-4B)
 //   POST /v1/chat/completions    → vision/OCR via image_url (Qwen3-VL-32B-Instruct)
-//   POST /v1/images/generations  → image gen (FLUX.2-klein-4B)
+//   POST /v1/images/generations  → image gen (stable-diffusion-3.5-large-turbo)
 //   POST /v1/images/edits        → image editing (401 verified, model pending)
 //   POST /v1/audio/speech        → TTS (401 verified)
 //   POST /v1/images/ocr          → dedicated OCR endpoint: currently all models

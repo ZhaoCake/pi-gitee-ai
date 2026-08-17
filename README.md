@@ -17,7 +17,7 @@
 | `gitee_rerank` | 候选文档相关性重排 | `Qwen3-Reranker-4B`（免费） |
 | `gitee_vision` | 图片理解 / 通用 OCR | `Qwen3-VL-32B-Instruct` |
 | `gitee_parse` | 高精度文档解析（PDF/图片/docx/pptx，输出 Markdown） | `MinerU2.5-Pro` |
-| `gitee_image` | 文生图，自动保存到磁盘并返回文件路径 | `FLUX.2-klein-4B` |
+| `gitee_image` | 文生图，自动保存到磁盘并返回文件路径 | `stable-diffusion-3.5-large-turbo` |
 
 所有工具的模型均可通过参数覆盖。
 
