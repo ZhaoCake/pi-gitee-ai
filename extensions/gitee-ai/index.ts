@@ -48,6 +48,17 @@ export default function (pi: ExtensionAPI) {
     models: GITEE_AI_MODELS,
   });
 
+  // ---- 扩展工具默认关闭 ------------------------------------------------------
+  // 下面的 5 个工具（embedding/rerank/vision/parse/image）大部分时候用不到，
+  // 默认不注册以保持工具列表精简。需要时启动 pi 前设置：
+  //   GITEE_AI_TOOLS=1 pi ...
+  // 或 fish: set -gx GITEE_AI_TOOLS 1
+  const giteeToolsEnabled = process.env.GITEE_AI_TOOLS === "1";
+  if (!giteeToolsEnabled) {
+    console.log("[pi-gitee-ai] gitee tools disabled (set GITEE_AI_TOOLS=1 to enable)");
+    return;
+  }
+
   // ---- Tool 1: embedding ----------------------------------------------------
   pi.registerTool(
     defineTool({
